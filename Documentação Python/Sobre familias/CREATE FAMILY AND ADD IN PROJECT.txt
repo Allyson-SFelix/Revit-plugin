@@ -1,0 +1,68 @@
+CREATE FAMILY AND ADD IN PROJECT
+
+Nessa apenas add uma família ou um bloco de família:
+
+DENTRO DA TRANSAÇÃO:
+
+coletor= FilteredElementCollector(doc)
+# pego as famílias do projeto e coloco no coletor
+
+coletor.OfCaregory(BuiltInCategoy.OST_Mass) 
+# filtro pela categoria, é o símbolo das famílias, nesse caso MASS é de volumes
+# BuiltInCategory.OST_Furniture — Mobiliário.
+# BuiltInCategory.OST_Doors — Portas.
+# BuiltInCategory.OST_Windows — Janelas.
+
+coletor.OfClass(FamilySymbol) 
+# filtro pegando apenas os símbolos e não a instancia das famílias
+
+familiaIdLista=coletor.GetElementIdIterator()
+# pego os Ids das famílias que filtrei do coletor e coloco na lista
+
+familiaIdLista.Reser()
+# como essa lsita ela foi percorrida, eu estou colocando ela para ser lida pelo inicio
+
+
+for item in familiaIdLista:
+	idFamilia=item
+	#pego o Id do item percorrido
+
+	symbolFamilia=doc.get_Element(idFamilia)
+	#pego o símbolo da família selecionada de acordo com o id
+
+	if symbolFamilia.Family.Name ==symbName:
+	# pego o nome do símbolo e verifico com o nome do símbolo da familia que quero add
+	# permite add apenas pelo símbolo que quero adicionar
+
+		localizacaoDeInsercao=XYZ(0,0,0)
+		# posição que irei add a nova instancia da família
+
+		familiaInstancia= doc.FamilyCreate.NewFamilyInstance(localizacaoDeInsercao,symbolFamilia,Structure.StructuralType.NonStructural)
+
+
+
+
+
+Nesse adiciona de acordo mais de uma família/instancias de uma vez na execução:
+
+- No lugar de colocar XYZ com 0, eu coloco mudando a posição
+- Coloco mais código para verificar se eu estou adicionando as instancias que quero
+
+
+
+
+ENTAO PARA ADICIOANR PRECISO:
+
+- família symbol /TIPO
+
+# verifico se existe no projeto e adiciono em uma posição, se existe eu apenas crio uma instancia  # na família nova e não faço o load da família
+# caso não exista, faço o load family
+
+
+PARA ADICONAR DE UM DIRETÓRIO:
+
+
+- family_path = r"C:\Caminho\Para\SuaFamilia.rfa" #CAMINHO
+- family_loaded = clr.Reference[Family]()  # referencia a família para add no projeto
+- doc.LoadFamily(family_path, family_loaded) # e adiciona no projeto
+

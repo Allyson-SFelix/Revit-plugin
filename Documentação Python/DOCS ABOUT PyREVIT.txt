@@ -1,0 +1,51 @@
+DOCS ABOUT PyREVIT
+
+IMPORTAÇÕES:
+import clr
+clr.AddReference('RevitAPI') 
+clr.AddReference('RevitAPIUI') 
+from Autodesk.Revit.DB import * #Importando as bibliotecas para usar o REVIT
+
+
+CRIAÇÃO DE VARIAVEIS SOBRE O APLICATIVO ABERTO E ARQUIVOS ATIVOS NO REVIT:
+app= __revit__.Application
+doc=__revit__.ActiveUIDocument.Document
+
+
+INICIAR UMA TRASAÇÃO: 
+#Obs: aparentemente é necessário iniciar uma transação para realizar algo e no final dar o commit  # para realizar a ação dentro desse bloco/intervalo 
+
+transacao= Transaction(doc,'Esse é a minha nova transacao')
+transacao.Start()
+
+#... code in blocks
+
+transacao.Commit()
+
+
+
+OU MELHOR
+
+def modify_document(doc):
+    try:
+        # Iniciando uma transação
+        t = Transaction(doc, "Modificar Documento")
+        t.Start()
+
+        # Código que modifica o documento vai aqui
+        # Exemplo: modificação de elementos, criação de paredes, etc.
+
+        # Commit para finalizar a transação com sucesso
+        t.Commit()
+
+    except Exception as e:
+        # Caso ocorra qualquer erro, rollback na transação
+        print(f"Erro: {e}")
+        if t.HasStarted():
+            t.RollBack()
+
+# Verificar se o documento pode ser modificado
+if not doc.IsReadOnly and doc.IsModifiable:
+    modify_document(doc)
+else:
+    print("O documento está em modo de somente leitura ou não pode ser modificado.")

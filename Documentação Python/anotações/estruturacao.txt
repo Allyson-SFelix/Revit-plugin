@@ -1,0 +1,19 @@
+-> CRIAÇÃO DA ARVORE
+    Como para adicionar mais de uma familia igual, precisa verificar se ela está presente, 
+e posso criar uma lista dos simbolos de familias presentes, entao crio a arvore facilitando
+
+    -> OBS: devo verificar periodicamente se alguma foi removida, se foi preciso atualizar a arvore 
+    #Esse parte precisa de melhor estudada
+
+
+
+#como irá funcionar inicialmente sem BD
+-> entao, seria bom para verificar se essa familia que quero add existi, ao carrega-la eu ja salvar seu ID e comparar com os IDS que existem, 
+filtrando esses que existem para o mesmo tipo (como MASS ou outro do tipo) e caso seja algum igual eu apenas crio uma nova instancia 
+e caso nao exista em uso esse arquivo carregado
+
+#como funcionará inicialmente com BD
+-> ESSA VISÃO É INICIAL,serve apenas para enquanto a familia estiver no meu diretorio, mas olhando essa minha explicação anterior, 
+será fundamental salvar o id no BD e ter a arvore para facilitar essa verificação, sendo preciso apenas inicialmente pegar o id do BD 
+e verificar na arvore se já existe, caso ja só inicializo a nova instancia com os dados que ja tenho por ja esta no proejto, caso nao exista, 
+faço a busca pelo caminho da nuvem  e todo o processos de load e nova instancia
