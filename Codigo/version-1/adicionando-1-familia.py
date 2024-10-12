@@ -12,6 +12,38 @@ app = __revit__.Application  # Obter a aplicação Revit ativa
 doc = __revit__.ActiveUIDocument.Document  # Obter o documento ativo
 
 #############################################
+class Parametro:
+        def __init__(self,listTextura,listaCores):
+            self.texturas=listTextura
+            self.cores=listaCores
+
+       
+def pegarParametros(family_symbols):
+    listTextura=[]
+    listColors=[]
+    for symbol_id in family_symbols:
+        symbol = doc.GetElement(symbol_id)  # Obter o FamilySymbol
+        symbol_name = symbol.get_Parameter(BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
+
+        material_param = symbol.get_Parameter(BuiltInParameter.MATERIAL_ID_PARAM)
+            
+        if material_param:
+            material_id = material_param.AsElementId()
+            material = doc.GetElement(material_id)  # Obter o material associado
+                
+            if isinstance(material, Material):
+                listColors.append(material.Color)
+                asset = material.AppearanceAssetId
+                if asset != ElementId.InvalidElementId:
+                    appearance_asset = doc.GetElement(asset)
+                    
+                    if isinstance(appearance_asset, AppearanceAssetElement):
+                        texture_property = appearance_asset.GetRenderingAsset().FindByName("generic_diffuse")
+                        if texture_property and texture_property.IsValid:
+                            listTextura.append(texture_property.Value)
+
+    parametro=Parametro(listTextura,listColors)
+    return parametro
 
 try:
     # iniciar transação
@@ -21,7 +53,15 @@ try:
     # Carergando a familia e verificando se foi carregado com sucesso e pegando o objeto da familia
     family_path = r"C:\Users\allys\OneDrive\Área de Trabalho\Projeto Revit\familias\privada.rfa"  # Caminho do arquivo da família
     family_loaded = clr.Reference[Family]()  # Referência para armazenar a família carregada
+    family_symbols = list(family_loaded.GetFamilySymbolIds())
+    parametros=Parametro(None,None)
+    parametros=pegarParametros(family_symbols)
+    print(parametros.texturas+"\n"+parametros.cores)
+    
+    
     verifica = doc.LoadFamily(family_path, family_loaded)  #Carrega a família
+    
+    
     if verifica:
         family_loaded = family_loaded.Value  # Acessa o objeto da família carregada
        
@@ -53,3 +93,7 @@ except Exception as e:
 finally:
     if transacao.HasStarted():
         transacao.RollBack()
+        
+        
+        
+ 

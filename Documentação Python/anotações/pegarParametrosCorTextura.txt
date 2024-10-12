@@ -1,0 +1,46 @@
+def pegarParametros(family_symbols):
+    listTextura = []
+    listColors = []
+    
+    for symbol_id in family_symbols:
+        symbol = doc.GetElement(symbol_id)  # Obter o FamilySymbol
+        
+        if symbol:
+            # Nome do símbolo para identificação
+            symbol_name = symbol.get_Parameter(BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
+            print(symbol_name)
+        
+            # Verificar se o parâmetro de material existe
+            material_param = symbol.get_Parameter(BuiltInParameter.MATERIAL_ID_PARAM)
+            
+            if material_param:
+                material_id = material_param.AsElementId()
+                material = doc.GetElement(material_id)  # Obter o material associado
+                
+                if isinstance(material, Material):
+                    print(material.Name)
+                    listColors.append(material.Color)  # Adicionar cor à lista
+                    
+                    # Verificar se o material tem textura associada
+                    asset = material.AppearanceAssetId
+                    if asset != ElementId.InvalidElementId:
+                        appearance_asset = doc.GetElement(asset)
+                        
+                        if isinstance(appearance_asset, AppearanceAssetElement):
+                            texture_property = appearance_asset.GetRenderingAsset().FindByName("generic_diffuse")
+                            if texture_property and texture_property.IsValid:
+                                print(texture_property.Value)
+                                listTextura.append(texture_property.Value)
+                            else:
+                                print("Nenhuma textura válida encontrada.")
+                    else:
+                        print("Nenhum asset de aparência encontrado para o material.")
+                else:
+                    print("Elemento encontrado não é um material.")
+            else:
+                print("Nenhum parâmetro de material encontrado para este símbolo.")
+        else:
+            print("Símbolo inválido.")
+
+    parametro = Parametro(listTextura, listColors)
+    return parametro

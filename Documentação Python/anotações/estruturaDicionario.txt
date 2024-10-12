@@ -1,0 +1,23 @@
+Pelo DICIONARIO
+
+-> posso criar um dicionarios de objetos
+-> dentro desse objeto será o objeto da familia e o id do arquivo
+-> quando eu for adicionar um arquivo eu pego seu ID e verifico se existe no dicionario se existe esse local no dicionario
+    ->caso sim crio a nova instancia
+    -> caso nao eu faço todo a criação de um dicionario e faço o load do arquivo e crio a nova instancia 
+
+
+COMO VAI SER FEITA:
+
+0) carregar o arquivo,fazer o load.
+    -> terei seus parametros
+
+1) criar o colletor de familias:
+    -> carregar todas as familias do projeto em forma de lista
+    -> percorrer a lista e colocar em uma árvore
+
+2) percorrer a lista do colletor e criar dicionario pela symbol[0]
+    -> carregar todas as familias do arquivo pelo symbol[0] no dicionario, verificando se existe um local com esse symbol
+    -> criar o local no dicionario para a nova familia
+
+3) dentro do dicionario,pode ter familias com o mesmo simbolos, entao posso criar arvore que salva por 

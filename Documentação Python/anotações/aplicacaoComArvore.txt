@@ -1,0 +1,27 @@
+Carregar a Família e Obter o ID:
+
+Ao tentar carregar uma nova família, você verifica se ela já existe no projeto pelo seu ID (ou pelo ElementId).
+
+Uso da Árvore:
+Utilize a árvore para armazenar e gerenciar os símbolos das famílias carregadas. Assim, você pode fazer buscas rápidas para verificar se a família já está presente.
+
+Criação de Nova Instância:
+Se a família já existir no projeto (ou no banco de dados), você cria uma nova instância a partir do símbolo correspondente.
+Se não existir, você faz o carregamento da família e a adiciona tanto ao projeto quanto ao banco de dados/árvore.
+
+
+
+COMO VAI SER FEITA:
+1) criar o colletor de familias:
+    -> carregar todas as familias do projeto em forma de lista
+    -> percorrer a lista e colocar em uma árvore
+
+2) percorrer a lista do colletor e criar a árvore
+    -> carregar todas as familias do arquivo pelo ID na árvore
+    -> criar a arvore com familia, sendo ordenado pelo ID
+
+3) Com a árvore criado, toda familia baixada sera verificado seu ID comparando se na árvore existe.
+    -> carregado uma familia selecionado, será armazenado seu ID (QUANDO FOR NO BD, APENAS PEGARÁ O ID DA OPÇÃO SELECIONADO E DEPOIS SERA )
+    -> faz a busca se esse ID está na árvore:
+        -> caso esteja, apenas será iniciado uma nova instancia no Revit e colocado na instancia da familia encontrada essa nova instância na lista instancia
+        -> caso não eseteja , será realizado toda a criação do arquivo
