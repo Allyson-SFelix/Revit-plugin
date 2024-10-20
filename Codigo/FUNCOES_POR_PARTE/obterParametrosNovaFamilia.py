@@ -14,10 +14,9 @@ doc = __revit__.ActiveUIDocument.Document  # Obter o documento ativo
 #############################################
 def pegarParametros(arquivo):## recebo a lista de SymbolID´s
     #variaveis que irei guardar:nome,categoria,lista de simbolos
-    categoriaArquivo=arquivo.FamilyCategory.Name
+    categoriaArquivo=arquivo.Name
     nomeArquivo=arquivo.FamilyCategory.Name
-    listaSimboloArquivo=list(arquivo.GetFamilySymbolIds())
-    
+    listaSimboloArquivo = [doc.GetElement(symbol_id) for symbol_id in arquivo.GetFamilySymbolIds()]
     parametro = Parametro(nomeArquivo,categoriaArquivo,listaSimboloArquivo)
     return parametro
 
@@ -47,7 +46,8 @@ try:
         #mostro a categoria e nome no terminal
         print(parametros.categoria)
         print(parametros.nome)
-        print(parametros.listaSimbolos)
+        for simb in parametros.listaSimbolos:
+            print(simb)
     
     else:
         print("Erro ao carregar a família.")

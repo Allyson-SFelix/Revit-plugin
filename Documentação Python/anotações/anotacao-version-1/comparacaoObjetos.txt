@@ -1,0 +1,8 @@
+Usar Equals
+
+symb.Equals(symb2) -> retorna True ou False
+
+
+Uso de GetHashCode
+
+symbHash=symb.GetHashCode()

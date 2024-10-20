@@ -51,7 +51,7 @@ try:
     transacao.Start()  # Inicia a transação
 
     # Carergando a familia e verificando se foi carregado com sucesso e pegando o objeto da familia
-    family_path = r"C:\Users\allys\OneDrive\Área de Trabalho\Projeto Revit\familias\privada.rfa"  # Caminho do arquivo da família
+    family_path = r"C:\Users\allys\OneDrive\Área de Trabalho\Projeto Revit\familias\privada_branca.rfa"  # Caminho do arquivo da família
     family_loaded = clr.Reference[Family]()  # Referência para armazenar a família carregada
     family_symbols = list(family_loaded.GetFamilySymbolIds())
     parametros=Parametro(None,None)
