@@ -3,53 +3,109 @@ clr.AddReference('RevitAPI')
 clr.AddReference('RevitAPIUI')
 
 from Autodesk.Revit.DB import *
+from Autodesk.Revit.UI import *
 
 app = __revit__.Application
 doc = __revit__.ActiveUIDocument.Document
 
-# Criar o coletor de símbolos de famílias (FamilySymbol)
-coletor = FilteredElementCollector(doc).OfClass(FamilySymbol)
+uiApp = __revit__  
+uiDoc = uiApp.ActiveUIDocument
+docs = uiDoc.Document
 
-'''Dicionario com as categorias que quero excluir e encontrar seus IDS'''
+coletor = FilteredElementCollector(doc).OfClass(FamilySymbol)
+dict_coletor_doc = {}
+
+class Coletor:
+    def __init__(self, symbColetor, nomeFamilia, categoria):
+        self.objetoFamilia = symbColetor
+        self.nomeFamilia = nomeFamilia
+        self.categoria = categoria
+
+class Geometry:
+    def __init__(self, area=None, volume=None, proporcao=None):
+        self.area = area
+        self.volume = volume
+        self.proporcao = proporcao
+
+    def __eq__(self, other):
+        return (self.volume == other.volume and
+                self.proporcao == other.proporcao)
+
+    def __hash__(self):
+        return hash((self.area, self.volume, self.proporcao))
+
+
 categorias_excluir = {
-    BuiltInCategory.OST_CableTray :None,
-    BuiltInCategory.OST_Conduit:None,
-    BuiltInCategory.OST_DuctSystem:None,
-    BuiltInCategory.OST_FlexDuctCurves:None,
-    BuiltInCategory.OST_Ceilings:None,
-    BuiltInCategory.OST_StructuralFoundation:None,
-    BuiltInCategory.OST_CurtainWallMullions:None,
-    BuiltInCategory.OST_Walls:None,
-    BuiltInCategory.OST_CurtainWallPanels:None,
-    BuiltInCategory.OST_StructuralFraming:None,
-    BuiltInCategory.OST_DuctSystem:None,
-    BuiltInCategory.OST_PipingSystem:None,
-    BuiltInCategory.OST_GenericAnnotation:None,
-    BuiltInCategory.OST_Roofs:None,
-    BuiltInCategory.OST_Topography:None,
-    BuiltInCategory.OST_PipeCurves:None,
-    BuiltInCategory.OST_FlexPipeCurves:None
+    BuiltInCategory.OST_CableTray: None,
+    BuiltInCategory.OST_Conduit: None,
+    BuiltInCategory.OST_DuctSystem: None,
+    BuiltInCategory.OST_FlexDuctCurves: None,
+    BuiltInCategory.OST_Ceilings: None,
+    BuiltInCategory.OST_StructuralFoundation: None,
+    BuiltInCategory.OST_CurtainWallMullions: None,
+    BuiltInCategory.OST_Walls: None,
+    BuiltInCategory.OST_CurtainWallPanels: None,
+    BuiltInCategory.OST_StructuralFraming: None,
+    BuiltInCategory.OST_PipingSystem: None,
+    BuiltInCategory.OST_GenericAnnotation: None,
+    BuiltInCategory.OST_Roofs: None,
+    BuiltInCategory.OST_Topography: None,
+    BuiltInCategory.OST_PipeCurves: None,
+    BuiltInCategory.OST_FlexPipeCurves: None
 }
 
-categorias_excluir_dic_ids = {int(excluir) for excluir in categorias_excluir} 
-'''Dicionario com as categorias que quero excluir com as chaves sendos seus IDS'''
+categorias_excluir_dic_ids = {int(excluir) for excluir in categorias_excluir}
 
-# Dicionário para armazenar as famílias que são consideradas "blocks"
-dict_familias_blocks = {}
+def pegarGeometry(geometry):
+    total_area = 0
+    total_volume = 0
+    proporcao = 0  # Inicializa proporção
 
-# Filtrar e remover famílias de categorias indesejadas
-for symb in coletor:
-    family_name = symb.Family.Name  # Nome da família
-    categoria = symb.Category
-    
-    # Verificar se a categoria da família não está no dicionário de exclusão
-    if categoria.Id.IntegerValue not in categorias_excluir_dic_ids:
-        # Se a família não estiver no dicionário, adicionar
-        if family_name not in dict_familias_blocks:
-            dict_familias_blocks[family_name] = [symb]
-        else:
-            dict_familias_blocks[family_name].append(symb)
+    for geo_obj in geometry:
+        if isinstance(geo_obj, Solid):
+            total_volume += geo_obj.Volume
+            box = geo_obj.GetBoundingBox()
+            altura = box.Max.Z - box.Min.Z
+            largura = box.Max.X - box.Min.X
+            profundidade = box.Max.Y - box.Min.Y
+            
+            if largura > 0 and profundidade > 0:
+                proporcao = altura / max(largura, profundidade)
 
-# Exibir o dicionário filtrado
-for nome_familia, coletores in dict_familias_blocks.items():
-    print(nome_familia,len(coletores))
+            for face in geo_obj.Faces:
+                total_area += face.Area
+        elif isinstance(geo_obj, Curve):
+            comprimentoCurva = geo_obj.Length
+
+    return Geometry(total_area, total_volume, proporcao)
+
+try:
+    for symb in coletor:
+        family_name = symb.Family.Name
+        categoria = symb.Category
+        
+        if categoria.Id.IntegerValue not in categorias_excluir_dic_ids:
+            geometry_options = Options()
+            geometry = symb.get_Geometry(geometry_options)
+
+            if geometry:
+                objGeometry = pegarGeometry(geometry)
+            else:
+                objGeometry=Geometry()
+
+            if family_name not in dict_coletor_doc:
+                dict_coletor_doc[family_name] = {}
+            else:
+                if objGeometry in dict_coletor_doc[family_name]:
+                    dict_coletor_doc[family_name][objGeometry].append(Coletor(symb, family_name, categoria))
+                else:
+                    dict_coletor_doc[family_name][objGeometry] = [Coletor(symb, family_name, categoria)]
+
+    # Imprime o último valor do dicionário após a coleta
+    if dict_coletor_doc:
+        print(dict_coletor_doc)
+    else:
+        print("Dicionário está vazio.")
+
+except Exception as e:
+    print(e)
