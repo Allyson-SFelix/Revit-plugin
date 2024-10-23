@@ -111,7 +111,7 @@ try:
     transacao.Start() 
 
     #Carrega arquivo
-    family_path = r"C:\Users\allys\OneDrive\Área de Trabalho\Projeto Revit\familias\privada_branca.rfa" 
+    family_path = r"C:\Program Files\Projeto Revit\familias\Mobiliario_Aparador_Azul_Vitrine.rfa"
     family_loaded = clr.Reference[Family]()  
     arquivoFamilia_loaded=family_loaded
     #verifica carregamento de arquivo (True ou False)

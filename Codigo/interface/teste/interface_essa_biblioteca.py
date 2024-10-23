@@ -5,6 +5,37 @@ clr.AddReference('System.Drawing')
 from System.Windows.Forms import Application, Form, Button, MessageBox
 from System.Drawing import Point, Size
 
+
+class Geometry:
+    def __init__(self, area=None, volume=None, proporcao=None):
+        self.area = area
+        self.volume = volume
+        self.proporcao = proporcao
+
+    def __eq__(self, other):
+        return (self.volume == other.volume and
+                self.proporcao == other.proporcao)
+
+    def __hash__(self):
+        return hash((self.area, self.volume, self.proporcao))
+
+
+class FamiliaArquivo:
+    def __init__(self,nomeFamilia=None,categoria=None,geometria=None,loaded):
+        self.nomeFamilia = nomeFamilia
+        self.categoria=categoria
+        self.geometria=geometria
+        self.loadedFamilia=loaded
+
+
+
+arquivoPrivada= FamiliaArquivo("privada_branca","Toilets",Geometry())
+arquivoBancoPraca=
+arquivoOrganizadorFilas=
+
+
+
+
 # Funções para as opções
 def opcao1(sender, event):
     MessageBox.Show("Você escolheu a Opção 1", "Opção 1")
