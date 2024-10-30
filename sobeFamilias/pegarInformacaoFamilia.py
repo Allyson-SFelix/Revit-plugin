@@ -63,7 +63,9 @@ categorias_excluir = {
     BuiltInCategory.OST_PipeCurves: None,
     BuiltInCategory.OST_FlexPipeCurves: None
 }
-
+#53.10120235190.7316359454125.090535670074.790026246720.404168452992
+#53.10120235190.7316359454125.090535670074.790026246720.404168452992'
+#53.10120235190.7316359454125.090535670074.790026246720.404168452992
 categorias_excluir_dic_ids = {int(excluir) for excluir in categorias_excluir}
 
 def pegarGeometry(geometry):
@@ -91,6 +93,8 @@ def pegarGeometry(geometry):
         return Geometry(total_area, total_volume, altura,largura,profundidade)
     else:
         return None
+    
+    
 try:
     for symb in coletor:
         family_name = symb.Family.Name
