@@ -1,0 +1,20 @@
+#Carrega arquivo
+                family_path = r"C:\Program Files\ProjetoRevit\familias\Paisagismo_BancoDePraca_Madeira_Vitrine.rfa"
+                family_loaded = clr.Reference[Family]()
+                doc.LoadFamily(family_path, family_loaded)
+                family_loaded=family_loaded.Value #PROBLEMA AQUI PQ VAI RETORNAR NONE POR JA ESTA O ARQUIVO NO PROJETO, MAS DE GEOMETRY DIFERENTE
+                
+                transacao.Commit()
+                print("POS LOAD")
+                familiaInstancia=colocarNovaFamilia(family_loaded)
+                print("POS FUNCAO INSERIR")
+                if familiaInstancia:
+                    print("dentro IF")
+                    valorId = familiaInstancia.Id
+                    newSymb = doc.GetElement(valorId)
+                    
+                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]=[]
+                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(newSymb)
+                else:
+                    print("PROBELMA INSERIR NOVA FAMILIA")
+                transacao.Commit()
