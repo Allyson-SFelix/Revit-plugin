@@ -21,6 +21,17 @@ doc = __revit__.ActiveUIDocument.Document  # Obter o documento ativo
 ##########################################
 ##########################################
 
+#VARIAVEIS GLOBAIS
+# PARTE QUE OBTEM TODAS AS FAMILIAS DO ARQUIVO EM UM DICIONARIO
+coletor = FilteredElementCollector(doc).OfClass(FamilySymbol)
+coletor_instancias = FilteredElementCollector(doc).OfClass(FamilyInstance)
+dict_coletor_doc = {}
+
+contadorDuplicates=1 
+''"PARA POSSIBILITAR A DUPLICACAO DURANTE A EXECUCAO DO APLICATIVO"''
+
+
+
 #PARTE FUNCOES
 
 def pegarGeometry(geometry):
@@ -57,7 +68,7 @@ def familiaInDict(nomeFamilia):
 def geometriaInDictFamilia(hashGeometry,nomeFamilia):
     return hashGeometry in dict_coletor_doc[nomeFamilia]
 
-def criarNovaInstacia(symb):
+def criarNovaInstacia(symb,altura,largura,profundidade):
     family_symbol = symb
 
     # Ativar o símbolo, se necessário
@@ -77,16 +88,28 @@ def criarNovaInstacia(symb):
     with Transaction(doc, "Criar Nova Instância") as transacao:
         transacao.Start()
         instance = doc.Create.NewFamilyInstance(localizacaoDeInsercao, family_symbol, Structure.StructuralType.NonStructural)
+        
+        altura_param = instance.LookupParameter("Altura")
+        if altura_param:
+            altura_param.Set(altura)
+        
+        largura_param = instance.LookupParameter("Largura")
+        if largura_param:
+            largura_param.Set(largura)
+        
+        profundidade_param = instance.LookupParameter("Profundidade")
+        if profundidade_param:
+            profundidade_param.Set(profundidade)
+        
         transacao.Commit()
-        return True
+        
+        return instance
     return False
        
 def pegarSymbolArquivo(arquivoFamilia):
     family_symbol_ids = arquivoFamilia.GetFamilySymbolIds()  # Obtem os Ids que representa cada simbolo da familia carregada
     first_symbol_id = list(family_symbol_ids)[0]  # Cria uma lista com esses ids e acessa o primeiro símbolo
-    return doc.GetElement(first_symbol_id)
-
-    
+    return doc.GetElement(first_symbol_id) 
      
 def colocarNovaFamilia(arquivoFamilia):
     family_symbol_ids = arquivoFamilia.GetFamilySymbolIds()  # Obtem os Ids que representa cada simbolo da familia carregada
@@ -110,13 +133,8 @@ def colocarNovaFamilia(arquivoFamilia):
 
 
 
-# PARTE QUE OBTEM TODAS AS FAMILIAS DO ARQUIVO EM UM DICIONARIO
 
-coletor = FilteredElementCollector(doc).OfClass(FamilySymbol)
-coletor_instancias = FilteredElementCollector(doc).OfClass(FamilyInstance)
-dict_coletor_doc = {}
-contadorDuplicates=1 
-''"PARA POSSIBILITAR A DUPLICACAO DURANTE A EXECUCAO DO APLICATIVO"''
+
 # CLASS
 class FamiliaInformacao:
     def __init__(self,symb,nomeFamilia,geometriaHash,arquivoLoad):
@@ -125,10 +143,9 @@ class FamiliaInformacao:
         self.geometriaHash=geometriaHash
         self.arquivoLoad=arquivoLoad
 class Coletor:
-    def __init__(self, symbColetor, nomeFamilia, categoria):
-        self.objetoFamilia = symbColetor
+    def __init__(self, objetoFamilia, nomeFamilia):
+        self.objetoFamilia = objetoFamilia
         self.nomeFamilia = nomeFamilia
-        self.categoria = categoria
 class Geometry:
     def __init__(self, area=None, volume=None, altura=None,largura=None,profundidade=None):
         self.area = area
@@ -166,9 +183,7 @@ categorias_excluir = {
     BuiltInCategory.OST_PipeCurves: None,
     BuiltInCategory.OST_FlexPipeCurves: None
 }
-#53.10120235190.7316359454125.090535670074.790026246720.404168452992
-#53.10120235190.7316359454125.090535670074.790026246720.404168452992'
-#53.10120235190.7316359454125.090535670074.790026246720.404168452992
+
 categorias_excluir_dic_ids = {int(excluir) for excluir in categorias_excluir}
 
 
@@ -178,6 +193,7 @@ categorias_excluir_dic_ids = {int(excluir) for excluir in categorias_excluir}
 try:
     for symb in coletor:
         family_name = symb.Family.Name
+        print(family_name) 
         categoria = symb.Category
         objGeometry=None
         if categoria.Id.IntegerValue not in categorias_excluir_dic_ids:
@@ -192,25 +208,25 @@ try:
             if family_name not in dict_coletor_doc:
                     dict_coletor_doc[family_name] = {}
                     if  objGeometry is None:
-                        dict_coletor_doc[family_name]["NoGeometria"]=[Coletor(symb, family_name, categoria)]
+                        dict_coletor_doc[family_name]["NoGeometria"]=[Coletor(symb, family_name)]
                     else:
                         geometry_chave = str(objGeometry.area) + str(objGeometry.volume) + str(objGeometry.altura)+str(objGeometry.largura)+str(objGeometry.profundidade)
-                        dict_coletor_doc[family_name][geometry_chave] = [Coletor(symb, family_name, categoria)]
+                        dict_coletor_doc[family_name][geometry_chave] = [Coletor(symb, family_name)]
                     
             else:
                 if  objGeometry is None:
                     if "NoGeometria" not in dict_coletor_doc[family_name]:
-                        dict_coletor_doc[family_name]["NoGeometria"]=[Coletor(symb, family_name, categoria)]
+                        dict_coletor_doc[family_name]["NoGeometria"]=[Coletor(symb, family_name)]
                     else:
-                        dict_coletor_doc[family_name]["NoGeometria"].append(Coletor(symb, family_name, categoria))
+                        dict_coletor_doc[family_name]["NoGeometria"].append(Coletor(symb, family_name))
                 
                 else:
                     geometry_chave = str(objGeometry.area) + str(objGeometry.volume) + str(objGeometry.altura)+str(objGeometry.largura)+str(objGeometry.profundidade)
                     
                     if geometry_chave in dict_coletor_doc[family_name]:
-                        dict_coletor_doc[family_name][geometry_chave].append(Coletor(symb, family_name, categoria))
+                        dict_coletor_doc[family_name][geometry_chave].append(Coletor(symb, family_name))
                     else:
-                        dict_coletor_doc[family_name][geometry_chave] = [Coletor(symb, family_name, categoria)]
+                        dict_coletor_doc[family_name][geometry_chave] = [Coletor(symb, family_name)]
                 
                 
                 
@@ -577,12 +593,13 @@ def opcao3(sender, event):
             print(familiaNova.symb)
             try:
                 print("dentro try")
-                if criarNovaInstacia(familiaNova.symb):
+                nova_instancia=criarNovaInstacia(familiaNova.symb,altura,largura,profundidade)
+                if nova_instancia:
                     print("POS CRIAR NOVA INSTANCIA")
                     print("Nova instancia com sucesso")
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(symb) #adiciona mais um item na lista de familias
-                    for i in dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]:
-                        print(i)
+                    novo_coletor=Coletor(familiaNova.symb,familiaNova.nomeFamilia)
+                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(novo_coletor) #adiciona mais um item na lista de familias
+                    
                 else:
                     print("PROBLEMA NA CRIACAO DE INSTANCIA")                
             except Exception as e:
@@ -604,19 +621,24 @@ def opcao3(sender, event):
                 if familiaNova.symb is not None:
                     # Duplica o símbolo
                     print("ANTES DUPLICATE")
+                    newHash=""
                     nome_unico=familiaNova.nomeFamilia
                     
-                    while nome_unico not in dict_coletor_doc:
-                        nome_unico=nome_unico+contadorDuplicates
-                        contadorDuplicates=contadorDuplicates+1
                         
-                    symb_novo = familiaNova.symb.Duplicate(nome_unico)
-                    print("DENTRO IF SYMB")      
-                    if symb_novo is not None:
-                        print("dentro if symb novo")              
-                    # Configura os parâmetros da nova geometria (se aplicável)
+                    symb_novo = familiaNova.symb.Duplicate("base")
+                    print("DENTRO IF SYMB")  
+                    if not symb_novo.IsActive:
+                        print("NAO ATIVADO")
+                        symb_novo.Activate()
+                    
                     if symb_novo is not None:
                         print("dentro if symb novo")
+                        while nome_unico in dict_coletor_doc:
+                            global contadorDuplicates
+                            contadorDuplicates=contadorDuplicates+1
+                            nome_unico=nome_unico+"_"+str(contadorDuplicates)
+                            print(nome_unico)
+                        symb_novo.Name=nome_unico
                         
                         # Verificar cada parâmetro antes de tentar definir
                         altura_param = symb_novo.LookupParameter("Altura")
@@ -637,19 +659,24 @@ def opcao3(sender, event):
                         else:
                             print("Parâmetro 'Profundidade' não encontrado em symb_novo.")
                     
-
-                        transacao.Commit()
+                        if altura_param is not None:
+                            newHash=criarHashGeomtry(area_Total,volume_Total,altura_param,largura_param,profundidade_param)
+                        else:
+                            newHash="NoGeometry"
+                    else:
+                        print("Nenhum FamilySymbol encontrado para duplicar.")
+                
+                transacao.Commit()
                     
-                else:
-                    print("Nenhum FamilySymbol encontrado para duplicar.")
-            
                 #criarNovaInstacia
                 print("ANTES DE CRIAR NOVA INSTANCIA")
-                if criarNovaInstacia(familiaNova.symb):
+                if criarNovaInstacia(familiaNova.symb,altura,largura,profundidade):
                     print("APOS CRIAR NOVA INSTANCIA")
                     # Adiciona ao dicionário
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]=[]
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(symb_novo)
+                    novo_coletor=Coletor(familiaNova.symb,nome_unico)
+                    dict_coletor_doc[nome_unico]={}
+                    dict_coletor_doc[nome_unico][newHash]=[]
+                    dict_coletor_doc[nome_unico][newHash].append(novo_coletor)
                     print("Nova variante de FamilySymbol criada e adicionada ao dicionário.")
                 else:
                     print("ERRO FAMILIA NOVA INSTANCIA")
@@ -666,9 +693,10 @@ def opcao3(sender, event):
             familiaNova.symb=dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"][0].objetoFamilia
             
             try:
-                if criarNovaInstacia(familiaNova.symb):
+                if criarNovaInstacia(familiaNova.symb,altura,largura,profundidade):
                     print("Nova instancia com sucesso")
-                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(familiaNova.symb) #adiciona mais um item na lista de familias
+                    novo_coletor=Coletor(familiaNova.symb,familiaNova.nomeFamilia)
+                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(novo_coletor) #adiciona mais um item na lista de familias
                 else:
                     print("PROBLEMA NA NOVA INSTANCIA")
             except Exception as e:
@@ -705,10 +733,11 @@ def opcao3(sender, event):
 
         if familiaNova.geometriaHash != None:
             #adicionar no dict principal criado o dict secundario com o hashGeometry da familia
-            
+            print("TEM GEOMETRY")
             #iniciar uma nova instancia
             try:
                 # Inicia transacao
+                print("DENTRO TRY")
                 transacao = Transaction(doc, "Carregar Família")
                 transacao.Start() 
                 familiaInstancia=colocarNovaFamilia(family_loaded)
@@ -719,11 +748,12 @@ def opcao3(sender, event):
                     valorId = familiaInstancia.Id
                     newSymb = doc.GetElement(valorId)
                     
-                    familiaNova.symb=newSymb
+                    familiaNova.symb=newSymb.Symbol
                     dict_coletor_doc[familiaNova.nomeFamilia] = {}
-                    
+                    print("SALVANDO NO DICT-PRINCIPAL-SECUNDARIO")
                     dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]=[]
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(newSymb)
+                    novo_coletor=Coletor(familiaNova.symb, family_name)
+                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(novo_coletor)
                 else:
                     print("PROBELMA INSERIR NOVA FAMILIA")
                 
@@ -737,7 +767,7 @@ def opcao3(sender, event):
                         
         else:
             #adicionar no dict principal criado o dict secundario com o NoGeometry
-            dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"]=None
+            
             
             #iniciar uma nova instancia
             try:
@@ -749,8 +779,15 @@ def opcao3(sender, event):
                 
                 if nova_instancia:
                 #inserir os valores carregados da familia
-                    newSymb=pegarSymbolArquivo(family_loaded)
-                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(newSymb)
+                    valorId = nova_instancia.Id
+                    newSymb = doc.GetElement(valorId)
+                    
+                    familiaNova.symb=newSymb.Symbol
+                    #[Coletor(symb, family_name, categoria)]
+                    dict_coletor_doc[familiaNova.nomeFamilia]={}
+                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"]=[]
+                    novo_coletor=Coletor(familiaNova.symb, family_name)
+                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(novo_coletor)
                 else:
                     print("PROBELMA INSERIR NOVA FAMILIA")
                     
