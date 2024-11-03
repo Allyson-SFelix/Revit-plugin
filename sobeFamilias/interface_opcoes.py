@@ -260,81 +260,128 @@ def opcao1(sender, event):
     familiaNova=FamiliaInformacao(None,"privada_branca",geometry_chave,None)
     
     if familiaInDict(familiaNova.nomeFamilia):
-    #Nome familia ja no dicionario
-        print("Familia no dict principal - pelo nome")
-    
-        if geometriaInDictFamilia(familiaNova.geometriaHash,familiaNova.nomeFamilia):
-        #Geometria ja no dicionario do nome da familia
-            print("familia no dict secundaria - pelo hashGeometry")
+        #Nome familia ja no dicionario
+            print("Familia no dict principal - pelo nome")
             
-            familiaNova.symb=dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash][0].objetoFamilia
-            
-            try:
-                if criarNovaInstacia(familiaNova.symb):
-                    print("Nova instancia com sucesso")
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(symb) #adiciona mais um item na lista de familias
-                    for i in dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]:
-                        print(i)
-                else:
-                    print("PROBLEMA NA CRIACAO DE INSTANCIA")                
-            except Exception as e:
-                print(e)
-            
-        
-        elif familiaNova.geometriaHash != None: #PROVAVEL ERRO
-            #novo dict geometria / necessario fazer o loaded do arquivo pois é uma familia diferente
-            print("geometria diferente")
-            #fazer loaded
-            try:
-                # Inicia transacao
-                transacao = Transaction(doc, "Carregar Família")
-                transacao.Start() 
-
-                #Carrega arquivo
-                family_path = r"C:\Program Files\ProjetoRevit\familias\privada_branca.rfa"
-                family_loaded = clr.Reference[Family]()
-                if colocarNovaFamilia(family_loaded):
-                    newSymb=pegarSymbolArquivo(family_loaded)
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]=[]
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(newSymb)
-                else:
-                    print("PROBELMA INSERIR NOVA FAMILIA")
-                transacao.Commit()
-            except Exception as e:
-                print(e)
+            if geometriaInDictFamilia(familiaNova.geometriaHash,familiaNova.nomeFamilia):
+            #Geometria ja no dicionario do nome da familia
+                print("familia no dict secundaria - pelo hashGeometry")
                 
-            finally:
-                if transacao.HasStarted():
-                    transacao.RollBack()
-        else:
-            #NoGeometry / sem geometria / necessario fazer o loaded do arquivo pois é uma fmailia diferente
-            print("NoGeometry")
-            #fazer loaded
-            try:
-                # Inicia transacao
-                transacao = Transaction(doc, "Carregar Família")
-                transacao.Start() 
-
-                #Carrega arquivo
-                family_path = r"C:\Program Files\ProjetoRevit\familias\privada_branca.rfa"
-                family_loaded = clr.Reference[Family]()
-                if colocarNovaFamilia(family_loaded):
-                    newSymb=pegarSymbolArquivo(family_loaded)
-                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(newSymb)
-                else:
-                    print("PROBELMA INSERIR NOVA FAMILIA")
-                transacao.Commit()
-            except Exception as e:
-                print(e)
+                familiaNova.symb=dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash][0].objetoFamilia
+                print(familiaNova.symb)
+                try:
+                    print("dentro try")
+                    nova_instancia=criarNovaInstacia(familiaNova.symb,altura,largura,profundidade)
+                    if nova_instancia:
+                        print("POS CRIAR NOVA INSTANCIA")
+                        print("Nova instancia com sucesso")
+                        novo_coletor=Coletor(familiaNova.symb,familiaNova.nomeFamilia)
+                        dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(novo_coletor) #adiciona mais um item na lista de familias
+                        
+                    else:
+                        print("PROBLEMA NA CRIACAO DE INSTANCIA")                
+                except Exception as e:
+                    print(e)
+            
                 
-            finally:
-                if transacao.HasStarted():
-                    transacao.RollBack()
+            elif familiaNova.geometriaHash is not None: 
+                #novo dict geometria / necessario fazer a duplicada de uma familia ja existente e mudando apenas sua geomtria
+                print("geometria diferente")
+                #fazer loaded
+                try:
+                    # Inicia transacao
+                    transacao = Transaction(doc, "Carregar Família")
+                    transacao.Start() 
+                    print("dentro try")
+                    primeira_chave = next(iter(dict_coletor_doc[familiaNova.nomeFamilia]))
+                    familiaNova.symb=dict_coletor_doc[familiaNova.nomeFamilia][primeira_chave][0].objetoFamilia
+                    print(familiaNova.symb)
+                    if familiaNova.symb is not None:
+                        # Duplica o símbolo
+                        print("ANTES DUPLICATE")
+                        newHash=""
+                        nome_unico=familiaNova.nomeFamilia
+                        
+                            
+                        symb_novo = familiaNova.symb.Duplicate("base")
+                        print("DENTRO IF SYMB")  
+                        if not symb_novo.IsActive:
+                            print("NAO ATIVADO")
+                            symb_novo.Activate()
+                        
+                        if symb_novo is not None:
+                            print("dentro if symb novo")
+                            symb_novo.Name=familiaNova.nomeFamilia
+                            
+                            # Verificar cada parâmetro antes de tentar definir
+                            altura_param = symb_novo.LookupParameter("Altura")
+                            if altura_param is not None:
+                                altura_param.Set(altura)
+                            else:
+                                print("Parâmetro 'Altura' não encontrado em symb_novo.")
+
+                            largura_param = symb_novo.LookupParameter("Largura")
+                            if largura_param is not None:
+                                largura_param.Set(largura)
+                            else:
+                                print("Parâmetro 'Largura' não encontrado em symb_novo.")
+
+                            profundidade_param = symb_novo.LookupParameter("Profundidade")
+                            if profundidade_param is not None:
+                                profundidade_param.Set(profundidade)
+                            else:
+                                print("Parâmetro 'Profundidade' não encontrado em symb_novo.")
+                        
+                            if altura_param is not None:
+                                newHash=criarHashGeomtry(area_Total,volume_Total,altura_param,largura_param,profundidade_param)
+                            else:
+                                newHash="NoGeometry"
+                        else:
+                            print("Nenhum FamilySymbol encontrado para duplicar.")
+                    
+                    transacao.Commit()
+                        
+                    #criarNovaInstacia
+                    print("ANTES DE CRIAR NOVA INSTANCIA")
+                    if criarNovaInstacia(familiaNova.symb,altura,largura,profundidade):
+                        print("APOS CRIAR NOVA INSTANCIA")
+                        # Adiciona ao dicionário
+                        novo_coletor=Coletor(familiaNova.symb,familiaNova.nomeFamilia)
+                        dict_coletor_doc[familiaNova.nomeFamilia][newHash]=[]
+                        dict_coletor_doc[familiaNova.nomeFamilia][newHash].append(novo_coletor)
+                        print("Nova variante de FamilySymbol criada e adicionada ao dicionário.")
+                        print(dict_coletor_doc[familiaNova.nomeFamilia][newHash][0].nomeFamilia)
+                    else:
+                        print("ERRO FAMILIA NOVA INSTANCIA")
+                except Exception as e:
+                    print(e)
+                    
+                finally:
+                    if transacao.HasStarted():
+                        transacao.RollBack()
+            else:
+                #NoGeometry / sem geometria / necessario fazer apenas uma nova instancia
+                print("NoGeometry")
+                #fazer loaded
+                familiaNova.symb=dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"][0].objetoFamilia
+                
+                try:
+                    if criarNovaInstacia(familiaNova.symb,altura,largura,profundidade):
+                        print("Nova instancia com sucesso")
+                        novo_coletor=Coletor(familiaNova.symb,familiaNova.nomeFamilia)
+                        dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(novo_coletor) #adiciona mais um item na lista de familias
+                    else:
+                        print("PROBLEMA NA NOVA INSTANCIA")
+                except Exception as e:
+                    print(e)
+                    
+                finally:
+                    if transacao.HasStarted():
+                        transacao.RollBack()
 
     else:
-        print("NAO ESTA NO PROJETO")
         # nao esta no dicionario / criar uma nova posição no dict principal e do secundario / carregar arquivo
-        
+        print("NAO ESTA NO PROJETO")
         # criar o dict prinicpal novo
         
         #carregando arquivo
@@ -352,30 +399,37 @@ def opcao1(sender, event):
             transacao.Commit()
         except Exception as e:
             print(e)
-                
+            
         finally:
             if transacao.HasStarted():
                 transacao.RollBack()
 
         if familiaNova.geometriaHash != None:
             #adicionar no dict principal criado o dict secundario com o hashGeometry da familia
-            print("CRIAR COM GEOMETRIA")
+            print("TEM GEOMETRY")
             #iniciar uma nova instancia
             try:
                 # Inicia transacao
+                print("DENTRO TRY")
                 transacao = Transaction(doc, "Carregar Família")
                 transacao.Start() 
-                valorAdd=colocarNovaFamilia(family_loaded)
+                familiaInstancia=colocarNovaFamilia(family_loaded)
                 transacao.Commit()
-                if valorAdd:
+                if familiaInstancia:
                 #inserir os valores carregados da familia
-                    print("POS FUNCAO COLOCAR NOVA FAMILIA")
-                    newSymb=pegarSymbolArquivo(family_loaded)
-                    print("POS PEGAR SIMBOLO")
+                    # Obtém o elemento pelo ID
+                    valorId = familiaInstancia.Id
+                    newSymb = doc.GetElement(valorId)
+                    
+                    familiaNova.symb=newSymb.Symbol
+                    dict_coletor_doc[familiaNova.nomeFamilia] = {}
+                    print("SALVANDO NO DICT-PRINCIPAL-SECUNDARIO")
                     dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]=[]
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(newSymb)
+                    novo_coletor=Coletor(familiaNova.symb, family_name)
+                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(novo_coletor)
                 else:
                     print("PROBELMA INSERIR NOVA FAMILIA")
+                
                 
             except Exception as e:
                 print(e)
@@ -387,26 +441,36 @@ def opcao1(sender, event):
         else:
             #adicionar no dict principal criado o dict secundario com o NoGeometry
             
+            
             #iniciar uma nova instancia
             try:
                 # Inicia transacao
                 transacao = Transaction(doc, "Carregar Família")
                 transacao.Start() 
-                valorAdd=colocarNovaFamilia(family_loaded)
+                nova_instancia=colocarNovaFamilia(family_loaded)
                 transacao.Commit()
-                if valorAdd:
+                
+                if nova_instancia:
                 #inserir os valores carregados da familia
-                    newSymb=pegarSymbolArquivo(family_loaded)
-                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(newSymb)
+                    valorId = nova_instancia.Id
+                    newSymb = doc.GetElement(valorId)
+                    
+                    familiaNova.symb=newSymb.Symbol
+                    #[Coletor(symb, family_name, categoria)]
+                    dict_coletor_doc[familiaNova.nomeFamilia]={}
+                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"]=[]
+                    novo_coletor=Coletor(familiaNova.symb, family_name)
+                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(novo_coletor)
                 else:
                     print("PROBELMA INSERIR NOVA FAMILIA")
-                
+                    
             except Exception as e:
                 print(e)
                 
             finally:
                 if transacao.HasStarted():
                     transacao.RollBack()    
+    
             
 def opcao2(sender, event):
     largura=0.34380099892333349
@@ -416,86 +480,130 @@ def opcao2(sender, event):
     volume_Total=0.0038537725583392543
     geometry_chave = criarHashGeomtry(area_Total,volume_Total,altura,largura,profundidade)
     familiaNova=FamiliaInformacao(None,"SegurançaEControle_OrganizadorDeFilas_Vitrine",geometry_chave,None)
-    
+        
     if familiaInDict(familiaNova.nomeFamilia):
-    #Nome familia ja no dicionario
-        print("Familia no dict principal - pelo nome")
-        
-        if geometriaInDictFamilia(familiaNova.geometriaHash,familiaNova.nomeFamilia):
-        #Geometria ja no dicionario do nome da familia
-            print("familia no dict secundaria - pelo hashGeometry")
+        #Nome familia ja no dicionario
+            print("Familia no dict principal - pelo nome")
             
-            familiaNova.symb=dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash][0].objetoFamilia
-            
-            try:
-                if criarNovaInstacia(familiaNova.symb):
-                    print("Nova instancia com sucesso")
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(symb) #adiciona mais um item na lista de familias
-                    for i in dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]:
-                        print(i)
-                else:
-                    print("PROBLEMA NA CRIACAO DE INSTANCIA")                
-            except Exception as e:
-                print(e)
-            
-        
-        elif familiaNova.geometriaHash != None: #PROVAVEL ERRO
-            #novo dict geometria / necessario fazer o loaded do arquivo pois é uma familia diferente
-            print("geometria diferente")
-            #fazer loaded
-            try:
-                # Inicia transacao
-                transacao = Transaction(doc, "Carregar Família")
-                transacao.Start() 
-
-                #Carrega arquivo
-                family_path = r"C:\Program Files\ProjetoRevit\familias\SegurançaEControle_OrganizadorDeFilas_Vitrine.rfa"
-                family_loaded = clr.Reference[Family]()
+            if geometriaInDictFamilia(familiaNova.geometriaHash,familiaNova.nomeFamilia):
+            #Geometria ja no dicionario do nome da familia
+                print("familia no dict secundaria - pelo hashGeometry")
                 
-                if colocarNovaFamilia(family_loaded):
+                familiaNova.symb=dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash][0].objetoFamilia
+                print(familiaNova.symb)
+                try:
+                    print("dentro try")
+                    nova_instancia=criarNovaInstacia(familiaNova.symb,altura,largura,profundidade)
+                    if nova_instancia:
+                        print("POS CRIAR NOVA INSTANCIA")
+                        print("Nova instancia com sucesso")
+                        novo_coletor=Coletor(familiaNova.symb,familiaNova.nomeFamilia)
+                        dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(novo_coletor) #adiciona mais um item na lista de familias
+                        
+                    else:
+                        print("PROBLEMA NA CRIACAO DE INSTANCIA")                
+                except Exception as e:
+                    print(e)
+            
+                
+            elif familiaNova.geometriaHash is not None: 
+                #novo dict geometria / necessario fazer a duplicada de uma familia ja existente e mudando apenas sua geomtria
+                print("geometria diferente")
+                #fazer loaded
+                try:
+                    # Inicia transacao
+                    transacao = Transaction(doc, "Carregar Família")
+                    transacao.Start() 
+                    print("dentro try")
+                    primeira_chave = next(iter(dict_coletor_doc[familiaNova.nomeFamilia]))
+                    familiaNova.symb=dict_coletor_doc[familiaNova.nomeFamilia][primeira_chave][0].objetoFamilia
+                    print(familiaNova.symb)
+                    if familiaNova.symb is not None:
+                        # Duplica o símbolo
+                        print("ANTES DUPLICATE")
+                        newHash=""
+                        nome_unico=familiaNova.nomeFamilia
+                        
+                            
+                        symb_novo = familiaNova.symb.Duplicate("base")
+                        print("DENTRO IF SYMB")  
+                        if not symb_novo.IsActive:
+                            print("NAO ATIVADO")
+                            symb_novo.Activate()
+                        
+                        if symb_novo is not None:
+                            print("dentro if symb novo")
+                            symb_novo.Name=familiaNova.nomeFamilia
+                            
+                            # Verificar cada parâmetro antes de tentar definir
+                            altura_param = symb_novo.LookupParameter("Altura")
+                            if altura_param is not None:
+                                altura_param.Set(altura)
+                            else:
+                                print("Parâmetro 'Altura' não encontrado em symb_novo.")
+
+                            largura_param = symb_novo.LookupParameter("Largura")
+                            if largura_param is not None:
+                                largura_param.Set(largura)
+                            else:
+                                print("Parâmetro 'Largura' não encontrado em symb_novo.")
+
+                            profundidade_param = symb_novo.LookupParameter("Profundidade")
+                            if profundidade_param is not None:
+                                profundidade_param.Set(profundidade)
+                            else:
+                                print("Parâmetro 'Profundidade' não encontrado em symb_novo.")
+                        
+                            if altura_param is not None:
+                                newHash=criarHashGeomtry(area_Total,volume_Total,altura_param,largura_param,profundidade_param)
+                            else:
+                                newHash="NoGeometry"
+                        else:
+                            print("Nenhum FamilySymbol encontrado para duplicar.")
                     
-                    newSymb=pegarSymbolArquivo(family_loaded)
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]=[]
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(newSymb)
-                else:
-                    print("PROBELMA INSERIR NOVA FAMILIA")
-                transacao.Commit()  
-            except Exception as e:
-                print(e)
+                    transacao.Commit()
+                        
+                    #criarNovaInstacia
+                    print("ANTES DE CRIAR NOVA INSTANCIA")
+                    if criarNovaInstacia(familiaNova.symb,altura,largura,profundidade):
+                        print("APOS CRIAR NOVA INSTANCIA")
+                        # Adiciona ao dicionário
+                        novo_coletor=Coletor(familiaNova.symb,familiaNova.nomeFamilia)
+                        dict_coletor_doc[familiaNova.nomeFamilia][newHash]=[]
+                        dict_coletor_doc[familiaNova.nomeFamilia][newHash].append(novo_coletor)
+                        print("Nova variante de FamilySymbol criada e adicionada ao dicionário.")
+                        print(dict_coletor_doc[familiaNova.nomeFamilia][newHash][0].nomeFamilia)
+                    else:
+                        print("ERRO FAMILIA NOVA INSTANCIA")
+                except Exception as e:
+                    print(e)
+                    
+                finally:
+                    if transacao.HasStarted():
+                        transacao.RollBack()
+            else:
+                #NoGeometry / sem geometria / necessario fazer apenas uma nova instancia
+                print("NoGeometry")
+                #fazer loaded
+                familiaNova.symb=dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"][0].objetoFamilia
                 
-            finally:
-                if transacao.HasStarted():
-                    transacao.RollBack()
-        else:
-            #NoGeometry / sem geometria / necessario fazer o loaded do arquivo pois é uma fmailia diferente
-            print("NoGeometry")
-            #fazer loaded
-            try:
-                # Inicia transacao
-                transacao = Transaction(doc, "Carregar Família")
-                transacao.Start() 
-
-                #Carrega arquivo
-                family_path = r"C:\Program Files\ProjetoRevit\familias\SegurançaEControle_OrganizadorDeFilas_Vitrine.rfa"
-                family_loaded = clr.Reference[Family]()
-                doc.LoadFamily(family_path, family_loaded)
-                if colocarNovaFamilia(family_loaded):
-                    newSymb=pegarSymbolArquivo(family_loaded)
-                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(newSymb)
-                else:
-                    print("PROBELMA INSERIR NOVA FAMILIA")
-                
-                transacao.Commit()
-            except Exception as e:
-                print(e)
-                
-            finally:
-                if transacao.HasStarted():
-                    transacao.RollBack()
+                try:
+                    if criarNovaInstacia(familiaNova.symb,altura,largura,profundidade):
+                        print("Nova instancia com sucesso")
+                        novo_coletor=Coletor(familiaNova.symb,familiaNova.nomeFamilia)
+                        dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(novo_coletor) #adiciona mais um item na lista de familias
+                    else:
+                        print("PROBLEMA NA NOVA INSTANCIA")
+                except Exception as e:
+                    print(e)
+                    
+                finally:
+                    if transacao.HasStarted():
+                        transacao.RollBack()
 
     else:
         # nao esta no dicionario / criar uma nova posição no dict principal e do secundario / carregar arquivo
-        
+        print("NAO ESTA NO PROJETO")
         # criar o dict prinicpal novo
         
         #carregando arquivo
@@ -503,40 +611,48 @@ def opcao2(sender, event):
             # Inicia transacao
             transacao = Transaction(doc, "Carregar Arquivo")
             transacao.Start() 
-
+            print("NOVA TRANSACAO")
             #Carrega arquivo
             family_path = r"C:\Program Files\ProjetoRevit\familias\SegurançaEControle_OrganizadorDeFilas_Vitrine.rfa"
             family_loaded = clr.Reference[Family]()
             doc.LoadFamily(family_path, family_loaded)
-            print(family_loaded)
-            
+            family_loaded=family_loaded.Value
+            print("CARREGADO O ARQUIVO")
             transacao.Commit()
         except Exception as e:
             print(e)
-                
+            
         finally:
             if transacao.HasStarted():
                 transacao.RollBack()
 
         if familiaNova.geometriaHash != None:
             #adicionar no dict principal criado o dict secundario com o hashGeometry da familia
-            
+            print("TEM GEOMETRY")
             #iniciar uma nova instancia
             try:
                 # Inicia transacao
+                print("DENTRO TRY")
                 transacao = Transaction(doc, "Carregar Família")
                 transacao.Start() 
-
-                if colocarNovaFamilia(family_loaded):
+                familiaInstancia=colocarNovaFamilia(family_loaded)
+                transacao.Commit()
+                if familiaInstancia:
                 #inserir os valores carregados da familia
-                    newSymb=pegarSymbolArquivo(family_loaded)
+                    # Obtém o elemento pelo ID
+                    valorId = familiaInstancia.Id
+                    newSymb = doc.GetElement(valorId)
+                    
+                    familiaNova.symb=newSymb.Symbol
+                    dict_coletor_doc[familiaNova.nomeFamilia] = {}
+                    print("SALVANDO NO DICT-PRINCIPAL-SECUNDARIO")
                     dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash]=[]
-                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(newSymb)
+                    novo_coletor=Coletor(familiaNova.symb, family_name)
+                    dict_coletor_doc[familiaNova.nomeFamilia][familiaNova.geometriaHash].append(novo_coletor)
                 else:
                     print("PROBELMA INSERIR NOVA FAMILIA")
                 
                 
-                transacao.Commit()    
             except Exception as e:
                 print(e)
                 
@@ -545,31 +661,38 @@ def opcao2(sender, event):
                     transacao.RollBack() 
                         
         else:
-            pass
             #adicionar no dict principal criado o dict secundario com o NoGeometry
-            dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"]=None
+            
             
             #iniciar uma nova instancia
             try:
                 # Inicia transacao
                 transacao = Transaction(doc, "Carregar Família")
                 transacao.Start() 
-
-                if colocarNovaFamilia(family_loaded):
+                nova_instancia=colocarNovaFamilia(family_loaded)
+                transacao.Commit()
+                
+                if nova_instancia:
                 #inserir os valores carregados da familia
-                    newSymb=pegarSymbolArquivo(family_loaded)
-                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(newSymb)
+                    valorId = nova_instancia.Id
+                    newSymb = doc.GetElement(valorId)
+                    
+                    familiaNova.symb=newSymb.Symbol
+                    #[Coletor(symb, family_name, categoria)]
+                    dict_coletor_doc[familiaNova.nomeFamilia]={}
+                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"]=[]
+                    novo_coletor=Coletor(familiaNova.symb, family_name)
+                    dict_coletor_doc[familiaNova.nomeFamilia]["NoGeometry"].append(novo_coletor)
                 else:
                     print("PROBELMA INSERIR NOVA FAMILIA")
-                 
-                
-                transacao.Commit()   
+                    
             except Exception as e:
                 print(e)
                 
             finally:
                 if transacao.HasStarted():
                     transacao.RollBack()    
+    
 
 def opcao3(sender, event):
     largura=0.34380099892333349
@@ -633,12 +756,7 @@ def opcao3(sender, event):
                     
                     if symb_novo is not None:
                         print("dentro if symb novo")
-                        while nome_unico in dict_coletor_doc:
-                            global contadorDuplicates
-                            contadorDuplicates=contadorDuplicates+1
-                            nome_unico=nome_unico+"_"+str(contadorDuplicates)
-                            print(nome_unico)
-                        symb_novo.Name=nome_unico
+                        symb_novo.Name=familiaNova.nomeFamilia
                         
                         # Verificar cada parâmetro antes de tentar definir
                         altura_param = symb_novo.LookupParameter("Altura")
@@ -673,11 +791,11 @@ def opcao3(sender, event):
                 if criarNovaInstacia(familiaNova.symb,altura,largura,profundidade):
                     print("APOS CRIAR NOVA INSTANCIA")
                     # Adiciona ao dicionário
-                    novo_coletor=Coletor(familiaNova.symb,nome_unico)
-                    dict_coletor_doc[nome_unico]={}
-                    dict_coletor_doc[nome_unico][newHash]=[]
-                    dict_coletor_doc[nome_unico][newHash].append(novo_coletor)
+                    novo_coletor=Coletor(familiaNova.symb,familiaNova.nomeFamilia)
+                    dict_coletor_doc[familiaNova.nomeFamilia][newHash]=[]
+                    dict_coletor_doc[familiaNova.nomeFamilia][newHash].append(novo_coletor)
                     print("Nova variante de FamilySymbol criada e adicionada ao dicionário.")
+                    print(dict_coletor_doc[familiaNova.nomeFamilia][newHash][0].nomeFamilia)
                 else:
                     print("ERRO FAMILIA NOVA INSTANCIA")
             except Exception as e:
