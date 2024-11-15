@@ -1,0 +1,53 @@
+Teste FastAPI
+
+Pasta Test
+	pastas internas
+		routers
+			arquivo_router_test
+
+ARQUIVO_ROUTERS_TEST
+----------------------------
+importa o TestClient
+
+importa o arquivo inicial/main
+
+client=TestClient(app) //app veio do main
+
+
+função NomeFuncaoTesteGet():
+	// na aspas simples fica no caso a url dele, e la no arquivo de rotas se eu colocar como get ou post ("/"), devo colocar no final da url dentro das aspas simples
+	response = cliente.get('pasta_do_main')
+
+	assert response.status_code == numeroStatus  //tem de retornar esse código
+	
+	print(response.json()) //depois apaga
+
+	assert response.json() == [
+		// executo assim e pego o que tiver de resposta desse print anterior
+	]
+
+
+FUNCAO NomeFuncaoTestePost():
+	//coloco o dado que normalmente seria enviado como json/ objeto
+	ex={
+	 "nome":"Allyson",
+	 "idade":12
+	}
+	
+	ex_copia=ex.copy()
+	//mudo algo do ex_copia, algum valor do atributo
+
+	// na aspas simples fica no caso a url dele, e la no arquivo de rotas se eu colocar como get ou post ("/"), devo colocar no final da url dentro das aspas simples
+	response=cliente.post('pasta do main ou url',ex.json)
+	
+	assert response.status_code == numeroDeveRetornar
+	
+	assert response.json() == ex_copia
+	
+
+	
+// CASO PASSE NO TESTE, SINAL QUE ESTA FUNCIONANDO NOS DOIS CASOS
+	
+
+
+

@@ -1,6 +1,3 @@
-#########################################
-# este programa pega todas as FamilySymbol e coloca em um dicicionario para facilitar a verificação
-#########################################
 import clr
 clr.AddReference('RevitAPI')  # Referência à API do Revit
 clr.AddReference('RevitAPIUI')  # Referência à API da interface de usuário do Revit
@@ -11,28 +8,7 @@ clr.AddReference('System.Drawing')
 #########################################
 from Autodesk.Revit.DB import *  # Importa todas as classes principais da DB API
 from Autodesk.Revit.UI import *  # Importa todas as classes de interface de usuário
-from System.Windows.Forms import Application, Form, Button, MessageBox
-from System.Drawing import Point, Size
 #########################################
-app = __revit__.Application  # Obter a aplicação Revit ativa
-uiApp = __revit__  
-uiDoc = uiApp.ActiveUIDocument
-doc = __revit__.ActiveUIDocument.Document  # Obter o documento ativo
-##########################################
-##########################################
-
-#VARIAVEIS GLOBAIS
-# PARTE QUE OBTEM TODAS AS FAMILIAS DO ARQUIVO EM UM DICIONARIO
-coletor = FilteredElementCollector(doc).OfClass(FamilySymbol)
-coletor_instancias = FilteredElementCollector(doc).OfClass(FamilyInstance)
-dict_coletor_doc = {}
-
-contadorDuplicates=1 
-''"PARA POSSIBILITAR A DUPLICACAO DURANTE A EXECUCAO DO APLICATIVO"''
-
-
-
-#PARTE FUNCOES
 
 def pegarGeometry(geometry):
     total_area = 0
@@ -131,122 +107,6 @@ def colocarNovaFamilia(arquivoFamilia):
     localizacaoDeInsercao, symbolFamilia, Structure.StructuralType.NonStructural) #inicializa a instancia (posicao,familia,...)
     return familiaInstancia
 
-
-
-
-
-# CLASS
-class FamiliaInformacao:
-    def __init__(self,symb,nomeFamilia,geometriaHash,arquivoLoad):
-        self.symb=symb
-        self.nomeFamilia=nomeFamilia
-        self.geometriaHash=geometriaHash
-        self.arquivoLoad=arquivoLoad
-class Coletor:
-    def __init__(self, objetoFamilia, nomeFamilia):
-        self.objetoFamilia = objetoFamilia
-        self.nomeFamilia = nomeFamilia
-class Geometry:
-    def __init__(self, area=None, volume=None, altura=None,largura=None,profundidade=None):
-        self.area = area
-        self.volume = volume
-        self.altura=altura
-        self.largura=largura
-        self.profundidade=profundidade
-
-    def __eq__(self, other):
-        return (self.area == other.area and 
-                self.volume == other.volume and
-                self.altura == other.altura and
-                self.largura ==other.largura and
-                self.profundidade ==other.profundidade)
-
-    def __hash__(self):
-        return hash((self.area, self.volume, self.altura,self.largura,self.profundidade))
-
-# Dicionario excluir
-categorias_excluir = {
-    BuiltInCategory.OST_CableTray: None,
-    BuiltInCategory.OST_Conduit: None,
-    BuiltInCategory.OST_DuctSystem: None,
-    BuiltInCategory.OST_FlexDuctCurves: None,
-    BuiltInCategory.OST_Ceilings: None,
-    BuiltInCategory.OST_StructuralFoundation: None,
-    BuiltInCategory.OST_CurtainWallMullions: None,
-    BuiltInCategory.OST_Walls: None,
-    BuiltInCategory.OST_CurtainWallPanels: None,
-    BuiltInCategory.OST_StructuralFraming: None,
-    BuiltInCategory.OST_PipingSystem: None,
-    BuiltInCategory.OST_GenericAnnotation: None,
-    BuiltInCategory.OST_Roofs: None,
-    BuiltInCategory.OST_Topography: None,
-    BuiltInCategory.OST_PipeCurves: None,
-    BuiltInCategory.OST_FlexPipeCurves: None
-}
-
-categorias_excluir_dic_ids = {int(excluir) for excluir in categorias_excluir}
-
-
-
-    
-    
-try:
-    for symb in coletor:
-        family_name = symb.Family.Name
-        print(family_name) 
-        categoria = symb.Category
-        objGeometry=None
-        if categoria.Id.IntegerValue not in categorias_excluir_dic_ids:
-            
-                # Usa a primeira instância para coletar a geometria
-            geometry_options = Options()
-            geometry = symb.get_Geometry(geometry_options)
-            print(family_name)    
-            if geometry:
-                objGeometry = pegarGeometry(geometry)        
-            
-            if family_name not in dict_coletor_doc:
-                    dict_coletor_doc[family_name] = {}
-                    if  objGeometry is None:
-                        dict_coletor_doc[family_name]["NoGeometria"]=[Coletor(symb, family_name)]
-                    else:
-                        geometry_chave = str(objGeometry.area) + str(objGeometry.volume) + str(objGeometry.altura)+str(objGeometry.largura)+str(objGeometry.profundidade)
-                        dict_coletor_doc[family_name][geometry_chave] = [Coletor(symb, family_name)]
-                    
-            else:
-                if  objGeometry is None:
-                    if "NoGeometria" not in dict_coletor_doc[family_name]:
-                        dict_coletor_doc[family_name]["NoGeometria"]=[Coletor(symb, family_name)]
-                    else:
-                        dict_coletor_doc[family_name]["NoGeometria"].append(Coletor(symb, family_name))
-                
-                else:
-                    geometry_chave = str(objGeometry.area) + str(objGeometry.volume) + str(objGeometry.altura)+str(objGeometry.largura)+str(objGeometry.profundidade)
-                    
-                    if geometry_chave in dict_coletor_doc[family_name]:
-                        dict_coletor_doc[family_name][geometry_chave].append(Coletor(symb, family_name))
-                    else:
-                        dict_coletor_doc[family_name][geometry_chave] = [Coletor(symb, family_name)]
-                
-                
-                
-                   
-            
-    # Imprime o último valor do dicionário após a coleta
-    if dict_coletor_doc:
-        print(dict_coletor_doc)
-    else:
-        print("Dicionário está vazio.")
-
-except Exception as e:
-    print(e)
-
-##########################################
-##########################################
-
-##PARTE DE INTERFACE 
-
-# Funções para as opções
 def opcao1(sender, event):
     print("a")
     largura=0.1088928624403937
@@ -914,37 +774,3 @@ def opcao3(sender, event):
                 if transacao.HasStarted():
                     transacao.RollBack()    
 
-
-# Criar a janela principal
-class MenuForm(Form):
-    def __init__(self):
-        self.Text = "Menu de Opções"
-        self.Size = Size(800, 600)
-        
-        # Botão Opção 1
-        botao1 = Button()
-        botao1.Text = "PRIVADA BRANCA"
-        botao1.Size = Size(100, 40)
-        botao1.Location = Point(100, 30)
-        botao1.Click += opcao1
-        self.Controls.Add(botao1)
-
-        # Botão Opção 2
-        botao2 = Button()
-        botao2.Text = "Opção 2"
-        botao2.Size = Size(100, 40)
-        botao2.Location = Point(100, 80)
-        botao2.Click += opcao2
-        self.Controls.Add(botao2)
-
-        # Botão Opção 3
-        botao3 = Button()
-        botao3.Text = "Banco de Praça Madeira"
-        botao3.Size = Size(100, 40)
-        botao3.Location = Point(100, 130)
-        botao3.Click += opcao3
-        self.Controls.Add(botao3)
-
-# Iniciar o aplicativo
-form = MenuForm()
-Application.Run(form)

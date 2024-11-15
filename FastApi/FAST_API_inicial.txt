@@ -1,0 +1,59 @@
+FAST API
+
+
+Conceitos:
+Verbos HTTP: Post,Get, Delete
+
+-> Post: O método POST é usado para enviar dados ao servidor, geralmente para criar ou modificar recursos. Exemplo: fazer login, enviar um formulário, cadastrar um novo usuário ou inserir um novo registro em um banco de dados.
+
+-> Get: O método GET é usado principalmente para solicitar dados de um servidor. Ele é usado para obter informações sem modificar o estado do servidor. Exemplo: acessar uma página, buscar uma lista de itens, carregar imagens ou qualquer recurso de leitura.
+
+
+- DENTRO VENV
+
+- API REST
+  ->criação do arquivo requirements.txt: //OBS: FICA NA MESMA PASTA QUE O ARQUIVO MAIN
+	-> com as apis necessárias para baixar
+	-> pip faster (ou lago do tipo) para pegar as bibliotecas usadas e suas versões e armazenar nessa arquivo requirements.txt
+
+  ->Crio uma pasta routers
+        -> arquivo que terá as rotas
+
+
+ARQUIVO ROTA_1
+--------------------------------
+importo o fastApi a parte APIRouter
+
+router = APIRouter(prefix=nome_arquivo_que_emite)
+
+//pode ser como lista,obj,etc
+@router.get("/",response_model="como_vai_ser_get") // solicitar|receber ao servidor
+função NomeFuncao():
+	return objeto //pode ser um objeto
+
+//pode ser como lista,obj,etc  
+@router.post("/", response_mode="como_vai_mostrar",status_code=numero_codigo) // enviar ao servidor
+função FuncaoReceber(argumento):
+	return
+
+
+ARQUIVO INICIAL / main
+------------------------------------------
+// -> instanciar a FastApi() ->OBJETO
+
+app = FastAPI()
+
+@app.get("/")
+
+função nomeFuncao_1(): //retorna string
+	return "mensagem"
+
+
+app.include.router(nome_arquivo_rotas) //implementando a rota
+
+uvicorn.run(app,host,port) -> ele executa e abre uma pagina web e mostra a "mensagem"
+
+
+
+
+
